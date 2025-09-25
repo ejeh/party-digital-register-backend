@@ -29,7 +29,6 @@ export class NewsController {
     return this.newsService.createNews(createNewsDto, req.user._id);
   }
 
-  // @Public()
   @Post('circular')
   @Roles(UserRole.NATIONAL_CHAIRMAN, UserRole.STATE_CHAIRMAN)
   async createCircular(
@@ -49,6 +48,7 @@ export class NewsController {
     return this.newsService.updateCircular(id, updateCircularDto, req.user._id);
   }
 
+  @Public()
   @Get()
   async getNews(@Request() req) {
     return this.newsService.getNewsForUser(
@@ -60,7 +60,7 @@ export class NewsController {
 
   @Get('circular')
   async getCirculars(@Request() req) {
-    return this.newsService.getCircularsForUser(req.user.role);
+    return this.newsService.getCircularsForUser(req.user.role, req.user._id);
   }
 
   @Post('circular/:id/acknowledge')
@@ -77,6 +77,12 @@ export class NewsController {
   ) {
     console.log(id, updateNewsDto, req.user._id);
     return this.newsService.updateNews(id, updateNewsDto, req.user._id);
+  }
+
+  @Delete('circular/:id')
+  @Roles(UserRole.STATE_CHAIRMAN)
+  async deletecircular(@Param('id') id: string, @Request() req) {
+    return this.newsService.deletecircular(id, req.user._id);
   }
 
   @Delete(':id')

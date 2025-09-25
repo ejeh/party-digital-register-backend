@@ -54,21 +54,57 @@ export class NewsService {
     );
   }
 
+  async deletecircular(id: string, userId: string) {
+    return this.circularModel.findOneAndDelete({ _id: id, author: userId });
+  }
+
+  // async getNewsForUser(userId: string, userRole: UserRole, userState: string) {
+  //   // Step 1: Fetch user info
+  //   const user = await this.userModel
+  //     .findById(userId)
+  //     .select('firstname lastname');
+
+  //   // Step 2: Fetch news items
+  //   const newsList = await this.newsModel
+  //     .find({
+  //       $or: [
+  //         { scope: NewsScope.NATIONAL }, // National-level news (visible to everyone)
+  //         { scope: NewsScope.STATE, state: userState }, // State-specific news matching user’s state
+  //         { author: userId }, // User’s own news (always visible to the creator)
+  //       ],
+  //       status: 'published', // Only published news
+  //     })
+  //     .sort({ createdAt: -1 });
+
+  //   // Step 3: Return combined result
+  //   return {
+  //     user: {
+  //       userId,
+  //       firstName: user?.firstname,
+  //       lastName: user?.lastname,
+  //     },
+  //     news: newsList,
+  //   };
+  // }
+
   async getNewsForUser(userId: string, userRole: UserRole, userState: string) {
     // Step 1: Fetch user info
     const user = await this.userModel
       .findById(userId)
       .select('firstname lastname');
 
-    // Step 2: Fetch news items
+    // Step 2: Fetch news
     const newsList = await this.newsModel
       .find({
         $or: [
-          { scope: NewsScope.NATIONAL },
-          { scope: NewsScope.STATE, state: userState },
-          { author: userId }, // Users can always see their own news
+          { scope: NewsScope.NATIONAL, status: 'published' }, // National → published only
+          {
+            scope: NewsScope.STATE,
+            state: userState,
+            status: 'published',
+          }, // State → published only
+          { author: userId }, // Author → ALL statuses
         ],
-        status: 'published',
       })
       .sort({ createdAt: -1 });
 
@@ -83,10 +119,13 @@ export class NewsService {
     };
   }
 
-  async getCircularsForUser(userRole: UserRole) {
+  async getCircularsForUser(userRole: UserRole, userId: string) {
     return this.circularModel
       .find({
         $or: [
+          // Show all circulars created by the logged-in user
+          { author: userId },
+          // Show circulars based on audience and user role
           {
             audience: CircularAudience.ALL_MEMBERS,
           },
